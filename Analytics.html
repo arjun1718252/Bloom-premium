@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>BloomMap+ — Analytics</title>
+  <link rel="stylesheet" href="style.css">
+
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+
+  <style>
+    /* Reduce pie chart size ONLY (requested fix) */
+    #pieChart {
+      max-width: 240px !important;
+      max-height: 240px !important;
+      margin: 0 auto;
+    }
+    .chart-host {
+      position: relative;
+      height: 260px; /* keep others same */
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+  </style>
+</head>
+
+<body class="theme-green">
+<div class="container">
+
+  <!-- Top bar -->
+  <div class="topbar">
+    <div>
+      <h1>Analytics</h1>
+      <div id="welcomeA" class="small muted"></div>
+    </div>
+    <div class="nav">
+      <a href="dashboard.html" class="link">Dashboard</a>
+      <a href="payment.html" class="link">Payment</a>
+    </div>
+  </div>
+
+  <!-- Main analytics card -->
+  <div class="card grid-analytics">
+
+    <!-- Total seeds -->
+    <div>
+      <h4>Total Bloom Seeds (Dashboard)</h4>
+      <div id="totalSeedsA" class="seeds-count">0</div>
+    </div>
+
+    <!-- Focus distribution (pie) -->
+    <div>
+      <h4>Focus Distribution (Pie)</h4>
+      <div class="chart-host">
+        <canvas id="pieChart"></canvas>
+        <div id="pieFallback" class="pie-fallback">No info yet 🍀</div>
+      </div>
+    </div>
+
+    <!-- Daily trend (last 7 days line) -->
+    <div style="grid-column:1/-1;">
+      <h4>Daily Study Trend (Last 7 days)</h4>
+      <div class="chart-host">
+        <canvas id="lineChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Subject minutes (bar) -->
+    <div style="grid-column:1/-1;">
+      <h4>Subject-wise Study Time (Bar)</h4>
+      <div class="chart-host">
+        <canvas id="barChart"></canvas>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Extra graph: Last 5 sessions -->
+  <div class="card">
+    <h4>Last 5 Sessions (Minutes)</h4>
+    <div class="chart-host">
+      <canvas id="sessionsChart"></canvas>
+    </div>
+  </div>
+
+</div>
+
+<div id="toastArea" class="toast-container"></div>
+
+<script src="premiumumm.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    if (window.BloomPremium && typeof window.BloomPremium.initAnalytics === 'function') {
+      window.BloomPremium.initAnalytics();
+    } else {
+      console.error('BloomPlus.initAnalytics not found');
+    }
+  });
+</script>
+
+</body>
+</html>

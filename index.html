@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>BloomMap Premium</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<!-- Body default is sunset for first-run fallback; JS will keep/apply persisted theme -->
+<body class="theme-sunset">
+  <!-- Sparkles -->
+  <div class="sparkle-layer"></div>
+
+  <div class="signin-wrapper">
+    <div class="signin-card">
+      <!-- Logo (ensure logo.png exists beside this file) -->
+      <img src="logo.png" alt="BloomMap logo" class="signin-logo" />
+
+      <h2 style="margin-bottom:4px;">BloomMap Premium ✨</h2>
+      <p class="small muted">Golden focus. Premium calm.</p>
+
+      <input id="usernameInput" class="input signin-input" placeholder="Your name" autocomplete="name" />
+
+      <button class="btn primary signin-btn" id="startBtn" disabled>Start Blooming 🌟</button>
+
+      <p style="margin-top:12px;" class="small muted">
+        “Every focused minute plants a seed of success.” 🍃
+      </p>
+    </div>
+  </div>
+
+  <script src="premiumumm.js"></script>
+  <script>
+    (function () {
+      const THEME_KEY = "bloom_premium_theme";
+      // Apply saved theme immediately (avoid flash). Default to sunset on first run.
+      let saved = localStorage.getItem(THEME_KEY);
+      if (!saved) {
+        saved = "theme-sunset";
+        localStorage.setItem(THEME_KEY, saved);
+      }
+      document.body.classList.remove("theme-gold", "theme-sunset", "theme-ocean");
+      document.body.classList.add(saved);
+
+      // Elements
+      const input = document.getElementById("usernameInput");
+      const btn = document.getElementById("startBtn");
+
+      // Focus input on load
+      input.focus();
+
+      // Enable/disable start button depending on input content
+      function refreshButtonState() {
+        const name = input.value.trim();
+        btn.disabled = name.length === 0;
+      }
+
+      input.addEventListener("input", refreshButtonState);
+
+      // Trigger start action (shared for click and Enter)
+      function startAction() {
+        const name = input.value.trim();
+        if (!name) {
+          // Shouldn't happen because button is disabled when empty, but safe-guard
+          alert("Enter your name 🌱");
+          input.focus();
+          return;
+        }
+        // persist profile
+        localStorage.setItem("bloom_premium_profile", JSON.stringify({ name }));
+
+        // optional: ensure theme persists if user changed it previously
+        // (premiumumm.js probably handles theme switching; keep stored key consistent)
+        const theme = localStorage.getItem(THEME_KEY) || "theme-sunset";
+        localStorage.setItem(THEME_KEY, theme);
+
+        // navigate to dashboard
+        window.location.href = "dashboard.html";
+      }
+
+      // Click handler
+      btn.addEventListener("click", startAction);
+
+      // Enter key activates the start (when input focused)
+      input.addEventListener("keydown", function (ev) {
+        if (ev.key === "Enter") {
+          ev.preventDefault();
+          // only start if input non-empty
+          if (input.value.trim().length) startAction();
+        }
+      });
+
+      // Initial state
+      refreshButtonState();
+    })();
+  </script>
+</body>
+</html>

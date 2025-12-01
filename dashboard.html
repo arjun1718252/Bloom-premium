@@ -1,0 +1,345 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>BloomMap Premium — Dashboard</title>
+  <link rel="stylesheet" href="style.css">
+
+  <!-- 🌸 BLOOMBOT CSS (ADDED HERE) -->
+  <style>
+    /* Floating button */
+    #bloombot-btn {
+      position: fixed;
+      bottom: 90px; /* moved up so toast doesn't overlap */
+      right: 30px;
+      background: rgba(255,255,255,0.25);
+      backdrop-filter: blur(12px);
+      padding: 12px 20px;
+      border-radius: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      z-index: 9999;
+      color: #fff;
+      transition: 0.2s;
+      user-select: none;
+    }
+    #bloombot-btn:hover {
+      background: rgba(255,255,255,0.35);
+    }
+
+    /* Chat Window */
+    #bloombot-window {
+      position: fixed;
+      bottom: 90px;
+      right: 30px;
+      width: 360px;
+      height: 500px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.22), rgba(255,255,255,0.10));
+      backdrop-filter: blur(18px);
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,0.22);
+      display: none;
+      flex-direction: column;
+      z-index: 9999;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: all .35s ease;
+    }
+    #bloombot-window.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .bloombot-header {
+      padding: 12px;
+      border-bottom: 1px solid rgba(255,255,255,0.18);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .close-btn {
+      background: transparent;
+      border: none;
+      font-size: 16px;
+      color: #fff;
+      cursor: pointer;
+    }
+
+    .bloombot-chat {
+      flex: 1;
+      padding: 12px;
+      overflow-y: auto;
+      font-size: 0.95rem;
+      color: #fff;
+    }
+
+    .user-msg, .bot-msg {
+      padding: 10px 14px;
+      border-radius: 12px;
+      margin-bottom: 10px;
+      max-width: 85%;
+      line-height: 1.4;
+    }
+
+    .user-msg {
+      background: rgba(255,255,255,0.25);
+      margin-left: auto;
+    }
+
+    .bot-msg {
+      background: rgba(0,0,0,0.25);
+      margin-right: auto;
+    }
+
+    .bloombot-input-area {
+      display: flex;
+      gap: 6px;
+      padding: 10px;
+    }
+
+    #bloombot-input {
+      flex: 1;
+      padding: 10px;
+      border-radius: 10px;
+      border: none;
+      background: rgba(255,255,255,0.22);
+      color: #fff;
+    }
+
+    #bloombot-send {
+      padding: 10px 14px;
+      border-radius: 10px;
+      background: rgba(255,255,255,0.22);
+      border: none;
+      color: #fff;
+      cursor: pointer;
+      font-weight: 700;
+    }
+  </style>
+</head>
+
+<body class="theme-sunset">
+  <div class="sparkle-layer"></div>
+
+  <div class="container">
+
+    <!-- Top Bar -->
+    <div class="topbar">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <img src="logo.png" alt="BloomMap logo"
+             style="width:65px;height:55px;border-radius:14px;object-fit:contain;">
+
+        <h1>BloomMap Premium</h1>
+      </div>
+
+      <div class="nav">
+        <div class="theme-switcher">
+          <span class="small">Theme:</span>
+
+          <select id="themeSwitcher" class="input" style="min-width:150px;">
+            <option value="theme-gold">Golden Glow ✨</option>
+            <option value="theme-sunset">Rose Sunset 🌇</option>
+            <option value="theme-ocean">Ocean Calm 🌊</option>
+          </select>
+        </div>
+
+        <button id="groupStudyBtn" class="btn secondary">Group Study</button>
+
+        <a href="Analytics.html" class="link" id="openAnalytics">Analytics</a>
+        <a href="payment.html" class="link">Payment</a>
+        <button id="signOut" class="btn secondary">Sign Out</button>
+      </div>
+    </div>
+
+    <!-- Timer Card -->
+    <div class="card timer-card">
+      <div class="huge-timer-wrap">
+        <h3 id="greetText" class="greet">Hey 👋</h3>
+
+        <div class="circle-timer-large">
+          <div class="time-center-large">
+            <div id="timeDisplay" class="time-xxl">00:00:00</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Controls -->
+      <div class="timer-controls-large">
+
+        <div>
+          <select id="subjectSelect"></select>
+          <button id="addSubjectBtn" class="btn secondary">+ Add</button>
+        </div>
+
+        <div>
+          <select id="topicSelect"></select>
+          <button id="addTopicBtn" class="btn secondary">+ Topic</button>
+        </div>
+
+        <div style="display:flex;gap:10px;margin-top:10px;">
+          <button id="startTimer" class="btn primary">Start</button>
+          <button id="pauseTimer" class="btn secondary">Pause</button>
+          <button id="resetTimer" class="btn secondary">Reset</button>
+          <button id="saveSession" class="btn secondary">Save</button>
+        </div>
+
+        <div id="statusMessage" class="small muted" style="text-align:center;margin-top:4px;">
+          Ready to start.
+        </div>
+      </div>
+    </div>
+
+    <!-- Map Section -->
+    <div class="card map-section">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <h3>Monthly Bloom Map</h3>
+          <div class="small muted" id="mapProgress">0 / 31 days bloomed</div>
+        </div>
+        <div class="seeds-box" style="text-align:right;">
+          <div id="seedsDisplay" class="seeds-count">0</div>
+          <div class="small">Bloom Seeds</div>
+        </div>
+      </div>
+
+      <div id="mapGrid" class="mapgrid-31"></div>
+    </div>
+
+    <!-- History -->
+    <div class="card">
+      <h4>Session History</h4>
+      <div id="sessionsList" class="sessions-list">
+        <div class="small muted">No sessions yet</div>
+      </div>
+    </div>
+
+  </div>
+
+  <div id="toastArea" class="toast-container"></div>
+
+  <!-- 🌸 BLOOMBOT FLOATING BUTTON + CHAT WINDOW -->
+  <div id="bloombot-btn">💬 BloomBot</div>
+
+  <div id="bloombot-window">
+    <div class="bloombot-header">
+      <span>BloomBot AI Assistant</span>
+      <button id="bloombot-close" class="close-btn">✖</button>
+    </div>
+
+    <div id="bloombot-chat" class="bloombot-chat"></div>
+
+    <div class="bloombot-input-area">
+      <input id="bloombot-input" type="text" placeholder="Ask BloomBot anything..." />
+      <button id="bloombot-send">Send</button>
+    </div>
+  </div>
+
+  <script src="premiumumm.js"></script>
+
+  <!-- ⭐ FINAL BLOOMBOT SCRIPT (YOUR VERSION) -->
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+
+      /* Load Theme */
+      const THEME_KEY = "bloom_premium_theme";
+      let savedTheme = localStorage.getItem(THEME_KEY);
+      if (!savedTheme) {
+        savedTheme = "theme-sunset";
+        localStorage.setItem(THEME_KEY, savedTheme);
+      }
+      document.body.classList.remove("theme-gold","theme-sunset","theme-ocean");
+      document.body.classList.add(savedTheme);
+
+      const themeSelect = document.getElementById("themeSwitcher");
+      if (themeSelect) themeSelect.value = savedTheme;
+
+      window.BloomPremium.initDashboard();
+
+      document.getElementById("signOut").onclick = () => {
+        window.localStorage.removeItem("bloom_premium_profile");
+        window.location.href = "index.html";
+      };
+
+      document.getElementById("startTimer").onclick = () => window.BloomPremium.startTimer();
+      document.getElementById("pauseTimer").onclick = () => window.BloomPremium.pauseTimer();
+      document.getElementById("resetTimer").onclick = () => window.BloomPremium.resetTimer();
+      document.getElementById("saveSession").onclick = () => window.BloomPremium.saveSession();
+
+      document.getElementById("addSubjectBtn").onclick = () => window.BloomPremium.addSubject();
+      document.getElementById("addTopicBtn").onclick = () => window.BloomPremium.addTopic();
+
+      document.getElementById("themeSwitcher").onchange = (e) =>
+        window.BloomPremium.changeTheme(e.target.value);
+
+      document.getElementById("groupStudyBtn").onclick = () => {
+        window.location.href = "groupstudy.html";
+      };
+
+      /* 🌸 BLOOMBOT HYBRID AI LOGIC (YOUR VERSION) */
+      const botBtn = document.getElementById("bloombot-btn");
+      const botWindow = document.getElementById("bloombot-window");
+      const botChat = document.getElementById("bloombot-chat");
+      const botInput = document.getElementById("bloombot-input");
+      const botSend = document.getElementById("bloombot-send");
+      const botClose = document.getElementById("bloombot-close");
+
+      botBtn.addEventListener("click", () => {
+        botWindow.style.display = "flex";
+        setTimeout(() => botWindow.classList.add("show"), 10);
+      });
+
+      botClose.addEventListener("click", () => {
+        botWindow.classList.remove("show");
+        setTimeout(() => botWindow.style.display = "none", 300);
+      });
+
+      function addMessage(text, sender = "bot") {
+        const div = document.createElement("div");
+        div.className = sender === "user" ? "user-msg" : "bot-msg";
+        div.textContent = text;
+        botChat.appendChild(div);
+        botChat.scrollTop = botChat.scrollHeight;
+      }
+
+      function generateReply(userText) {
+        userText = userText.toLowerCase();
+
+        if (userText.includes("hi") || userText.includes("hello"))
+          return "Hey! How can I help you today? 🌼";
+
+        if (userText.includes("study"))
+          return "Study tip: Try the 25-minute focus technique! It boosts productivity 🌱";
+
+        if (userText.includes("timer"))
+          return "The timer is your best friend! Start it and stay consistent ⏱️";
+
+        if (userText.includes("motivate"))
+          return "You're doing amazing — every minute you invest now makes you unstoppable! 💪🔥";
+
+        if (userText.includes("math"))
+          return "Math becomes easier when you break problems into small chunks. I can help you with that too! ✨";
+
+        return "Got it! I'm here to help you with studying, productivity, routines, motivation & more 🌸";
+      }
+
+      botSend.addEventListener("click", () => {
+        const text = botInput.value.trim();
+        if (!text) return;
+        addMessage(text, "user");
+        botInput.value = "";
+        setTimeout(() => addMessage(generateReply(text), "bot"), 400);
+      });
+
+      botInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") botSend.click();
+      });
+
+    });
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>BloomMap Premium — Payment</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+<div class="sparkle-layer"></div>
+
+<div class="container">
+
+  <!-- TOPBAR (CENTERED LOGO + THEME LOADING) -->
+  <div class="topbar" style="justify-content:center;text-align:center;flex-direction:column;gap:8px;">
+
+    <!-- ⭐ Larger Centered Logo (updated to 75px) -->
+    <img src="logo.png" alt="BloomMap logo"
+         style="width:75px;height:75px;border-radius:16px;object-fit:cover;margin-bottom:2px;">
+
+    <h1>BloomMap Premium</h1>
+
+    <div class="nav" style="margin-top:10px;">
+      <a href="dashboard.html" class="link">Dashboard</a>
+      <a href="analytics.html" class="link">Analytics</a>
+    </div>
+
+  </div>
+
+  <div class="card" style="text-align:center;padding:40px 24px;">
+    <h2>You're already at the top tier ✨</h2>
+
+    <p class="small muted" style="max-width:480px;margin:10px auto 0;">
+      There’s no higher plan than <strong>BloomMap Premium</strong> right now.
+      You’ve unlocked all the golden features — focus, streaks, analytics and theme controls.
+    </p>
+
+    <p class="small" style="margin-top:18px;">
+      Keep planting sessions, keep blooming progress 🌼
+    </p>
+
+    <button class="btn primary" style="margin-top:22px;"
+            onclick="window.location.href='dashboard.html'">
+      Back to Dashboard
+    </button>
+  </div>
+
+</div>
+
+<!-- Load theme dynamically -->
+<script>
+  const THEME_KEY = "bloom_premium_theme";
+  let savedTheme = localStorage.getItem(THEME_KEY);
+
+  if (!savedTheme) {
+    savedTheme = "theme-sunset";
+    localStorage.setItem(THEME_KEY, savedTheme);
+  }
+
+  document.body.classList.add(savedTheme);
+</script>
+
+</body>
+</html>

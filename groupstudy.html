@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Group Study — BloomMap</title>
+
+  <!-- Load your app’s CSS so UI matches perfectly -->
+  <link rel="stylesheet" href="style.css" />
+
+  <!-- PeerJS (no backend needed) -->
+  <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
+
+  <style>
+    /* Group Study page minor enhancements */
+    .gs-section { margin-bottom:16px; }
+    .gs-row { display:flex; gap:10px; margin-bottom:10px; flex-wrap:wrap; }
+    .gs-chat {
+      height: 380px;
+      overflow-y: auto;
+      background: rgba(255,255,255,0.12);
+      border-radius: 12px;
+      padding: 12px;
+      backdrop-filter: blur(10px);
+    }
+    .msg { margin-bottom:8px; }
+    .meta { font-size:0.8rem; color:var(--muted); }
+    .system { color:#ffe4f2; font-style:italic; }
+  </style>
+</head>
+
+<body class="theme-sunset"> <!-- Will be replaced by correct theme on load -->
+  <div class="sparkle-layer"></div>
+
+  <div class="container">
+
+    <!-- Top Bar -->
+    <div class="topbar">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <img src="logo.png" style="width:40px;height:40px;border-radius:12px;">
+        <h2>Group Study</h2>
+      </div>
+
+      <!-- Back to Dashboard -->
+      <button onclick="window.location.href='dashboard.html'" class="btn secondary">
+        ← Back
+      </button>
+    </div>
+
+    <!-- Card -->
+    <div class="card">
+
+      <!-- ENTRY AREA -->
+      <div id="entryArea" class="gs-section">
+        <div class="gs-row">
+          <input id="nameInput" class="input" style="flex:1;" placeholder="Your name">
+        </div>
+
+        <div class="gs-row">
+          <button id="createRoomBtn" class="btn primary" style="flex:1;">Create Room</button>
+        </div>
+
+        <div class="gs-row">
+          <input id="joinRoomId" class="input" placeholder="Enter Room ID" style="flex:1;">
+          <button id="joinRoomBtn" class="btn secondary">Join</button>
+        </div>
+      </div>
+
+      <!-- ROOM AREA -->
+      <div id="roomArea" style="display:none;">
+        <p><b>Room ID:</b> <span id="roomIdText"></span></p>
+        <p id="peerCount" class="small muted">Connected: 0</p>
+
+        <div id="chatArea" class="gs-chat"></div>
+
+        <div class="gs-row">
+          <input id="msgInput" class="input" placeholder="Type message..." style="flex:1;">
+          <button id="sendBtn" class="btn primary">Send</button>
+        </div>
+
+        <div class="gs-row">
+          <button id="shareTimerBtn" class="btn secondary">Share Timer</button>
+          <button id="leaveBtn" class="btn secondary">Leave</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+<script>
+/* ============================
+    THEME SYNC (MATCH DASHBOARD)
+   ============================ */
+(function applyTheme() {
+  try {
+    const saved = localStorage.getItem("bloom_premium_theme") || "theme-sunset";
+    document.body.classList.remove("theme-gold","theme-sunset","theme-ocean");
+    document.body.classList.add(saved);
+  } catch (e) {}
+})();
+
+/* ============================
+    PEERJS — NO BACKEND CHAT
+   ============================ */
+let peer = null;
+let isHost = false;
+let roomId = null;
+
+const connections = {}; // Host stores all clients
+
+function randomRoom(len=6){
+  const c="ABCDEFGHJKMNPQRSTUVWXYZ23456789";
+  let s=""; for(let i=0;i<len;i++) s+=c[Math.floor(Math.random()*c.length)];
+  return s;
+}
+
+function appendMsg(html){
+  const box=document.getElementById("chatArea");
+  const div=document.createElement("div");
+  div.className="msg";
+  div.innerHTML=html;
+  box.appendChild(div);
+  box.scrollTop=box.scrollHeight;
+}
+
+function userName(){
+  return document.getElementById("nameInput").value.trim() || "Guest";
+}
+
+/* CREATE ROOM */
+document.getElementById("createRoomBtn").onclick=()=>{
+  roomId=randomRoom();
+  isHost=true;
+
+  peer=new Peer(roomId);
+
+  peer.on("open",()=>{
+    document.getElementById("entryArea").style.display="none";
+    document.getElementById("roomArea").style.display="block";
+    document.getElementById("roomIdText").textContent=roomId;
+
+    appendMsg(`<div class="system">Room created. Share ID with friends!</div>`);
+  });
+
+  // Host waits for clients
+  peer.on("connection",conn=>{
+    connections[conn.peer]=conn;
+    updateConnectedCount();
+
+    conn.on("data",data=>handleIncoming(data, conn));
+    conn.on("close", ()=>{
+      delete connections[conn.peer];
+      updateConnectedCount();
+    });
+  });
+};
+
+/* JOIN ROOM */
+document.getElementById("joinRoomBtn").onclick=()=>{
+  roomId=document.getElementById("joinRoomId").value.toUpperCase();
+  if(!roomId) return alert("Enter Room ID");
+
+  isHost=false;
+  peer=new Peer();
+
+  peer.on("open",()=>{
+    const conn=peer.connect(roomId);
+    connections["host"]=conn;
+
+    conn.on("open",()=>{
+      conn.send({ type:"join", name:userName() });
+
+      document.getElementById("entryArea").style.display="none";
+      document.getElementById("roomArea").style.display="block";
+      document.getElementById("roomIdText").textContent=roomId;
+
+      appendMsg(`<div class="system">Connected to host.</div>`);
+      document.getElementById("peerCount").innerText="Connected: 1";
+    });
+
+    conn.on("data",data=>handleIncoming(data, conn));
+  });
+};
+
+/* HANDLE MESSAGES */
+function handleIncoming(data, conn){
+  if(data.type==="chat"){
+    appendMsg(`<b>${data.name}:</b> ${data.text}`);
+  }
+  if(data.type==="join"){
+    appendMsg(`<div class="system">${data.name} joined.</div>`);
+  }
+  if(data.type==="timer"){
+    appendMsg(`<div class="system">${data.name} shared timer: <b>${data.time}</b></div>`);
+  }
+
+  // Host forwards to all other clients
+  if(isHost){
+    for(let id in connections){
+      if(connections[id]!==conn){
+        connections[id].send(data);
+      }
+    }
+  }
+}
+
+function updateConnectedCount(){
+  document.getElementById("peerCount").innerText =
+    "Connected: " + Object.keys(connections).length;
+}
+
+/* SEND MESSAGE */
+document.getElementById("sendBtn").onclick=()=>{
+  const text=document.getElementById("msgInput").value;
+  if(!text) return;
+
+  const data={ type:"chat", name:userName(), text };
+
+  if(isHost){
+    appendMsg(`<b>${userName()}:</b> ${text}`);
+    for(let id in connections) connections[id].send(data);
+  } else {
+    connections["host"].send(data);
+  }
+
+  document.getElementById("msgInput").value="";
+};
+
+/* SHARE TIMER */
+document.getElementById("shareTimerBtn").onclick=()=>{
+  const time=prompt("Enter elapsed time (e.g. 00:25:12)");
+  if(!time) return;
+
+  const data={ type:"timer", name:userName(), time };
+
+  if(isHost){
+    appendMsg(`<div class="system">${userName()} shared timer: <b>${time}</b></div>`);
+    for(let id in connections) connections[id].send(data);
+  } else {
+    connections["host"].send(data);
+  }
+};
+
+/* LEAVE */
+document.getElementById("leaveBtn").onclick=()=>{
+  location.href="dashboard.html";
+};
+</script>
+
+</body>
+</html>
